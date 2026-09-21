@@ -258,29 +258,20 @@
     <div class="card" data-step="2" style="display:none">
       <div class="stepnum">Step 2 of 4</div>
       <h2>Choose your audio file</h2>
-      <p class="why">Recordings are kept in the <strong>audio</strong> folder alongside this tool. Pick one from the list, or add a new one first.</p>
+      <p class="why" id="step2why">Pick your recording from the list. If it is not there yet, add it first.</p>
 
       <div id="pickwrap">
         <div class="q">Which recording?</div>
         <p class="qhint" id="pickhint">Looking for recordings…</p>
         <div class="opts" id="picklist"></div>
         <div class="btnrow" style="margin-top:12px">
-          <button type="button" class="link" id="pickrefresh">Just uploaded one? Refresh the list</button>
+          <button type="button" class="link" id="pickrefresh">Just added one? Refresh the list</button>
         </div>
       </div>
 
       <details class="howto" id="addhow" style="margin-top:20px">
         <summary style="cursor:pointer;font-weight:650;font-size:.92rem;color:var(--accent)">How do I add a new recording?</summary>
-        <ol style="margin-top:11px">
-          <li>Save your recording as an <strong>MP3</strong>. (In most programs: File → Export → MP3.)</li>
-          <li>Give it a clear filename with no spaces, such as <code>french-l2-track1.mp3</code>.</li>
-          <li>Open the <strong>audio folder</strong> <a id="addlink" href="#" target="_blank" rel="noopener">in GitHub</a>.</li>
-          <li>Click <strong>Add file</strong> → <strong>Upload files</strong>, drag your MP3 in, then click <strong>Commit changes</strong>.</li>
-          <li>Wait about a minute, then come back here and press <em>Refresh the list</em>.</li>
-        </ol>
-        <p style="font-size:.87rem;margin:11px 0 0;color:var(--muted)">
-          No GitHub account? Ask whoever set this tool up to add you, or send them the file.
-        </p>
+        <div id="addsteps"></div>
       </details>
 
       <details id="pasteblock" style="margin-top:18px">
@@ -448,28 +439,31 @@
           File → Export → MP3. A WAV will work but is many times larger and slower to load.</li>
         <li>Your DigiExam exam, ready to add a question to.</li>
       </ul>
-      <div class="note warn">
-        <strong>Google Drive, OneDrive and Dropbox will not work.</strong> Those services deliberately
-        block other websites from playing their files, and no sharing setting changes that. Recordings
-        live in this tool's own <strong>audio</strong> folder instead — Step 1 shows how.
+      <div class="note ok">
+        <strong>You do not need any new accounts or logins.</strong> Recordings go into a shared
+        Google Drive folder and are copied across automatically. Step 1 shows how.
       </div>
     </section>
 
     <section>
-      <h2>Step 1 — Add your recording to the audio folder</h2>
+      <h2>Step 1 — Put your recording in the shared Drive folder</h2>
       <p>Skip this if your recording is already in the list — go straight to Step 2.</p>
       <ol>
-        <li>Give your file a clear name with no spaces, such as <code>french-l2-track1.mp3</code>.
-          You will pick it from a list later, so make it recognisable.</li>
-        <li>Open the tool and go to <strong>Step 2</strong>, then open
-          <em>How do I add a new recording?</em> and click the link to the audio folder.</li>
-        <li>In GitHub, click <strong>Add file</strong> → <strong>Upload files</strong>.</li>
-        <li>Drag your MP3 into the box, then scroll down and click <strong>Commit changes</strong>.</li>
-        <li>Wait about a minute, go back to the tool, and press <em>Refresh the list</em>.
-          Your recording will appear.</li>
+        <li>Save your recording as an <strong>MP3</strong>. In most programs that is
+          File → Export → MP3. Mono at 96–128 kbps is plenty for speech.</li>
+        <li>Give it a name you will recognise in a list, such as <code>french-l2-track1.mp3</code>.</li>
+        <li>Open the <strong>shared recordings folder</strong> in Google Drive. The link is in the
+          tool, under <em>How do I add a new recording?</em> on Step 2.</li>
+        <li>Drag your MP3 into that folder. <strong>That is the whole job.</strong></li>
+        <li>Wait about five minutes, then go back to the tool and press <em>Refresh the list</em>.</li>
       </ol>
-      <p><strong>No GitHub account?</strong> Ask whoever set this tool up to add you as a collaborator —
-      it takes them a minute and you only need it once. Or simply send them the file.</p>
+      <p>Recordings are copied out of that folder automatically every few minutes. You do not need
+      an account for anything, and nobody has to do it for you.</p>
+      <div class="note warn">
+        <strong>Do not use a Drive share link in the tool.</strong> Google blocks other websites from
+        playing files straight out of Drive, whatever the sharing settings say. Dropping the file in
+        the shared folder is what makes it work — the tool plays its own copy.
+      </div>
     </section>
 
     <section>
@@ -528,9 +522,13 @@
       <p><strong>"Google Drive will not let other websites play its files."</strong> This is not your
       sharing settings, and changing them will not help — Google blocks it for every Drive file.
       Put the MP3 in the audio folder instead, as described in Step 1.</p>
-      <p><strong>Your recording is not in the list.</strong> Either the upload has not finished publishing
-      (wait a minute and press <em>Refresh the list</em>), or it is not an audio file — only
-      <code>.mp3</code>, <code>.m4a</code>, <code>.wav</code> and similar are shown.</p>
+      <p><strong>Your recording is not in the list.</strong> Recordings are collected from the Drive
+      folder every few minutes, so give it five and press <em>Refresh the list</em>. If it still has
+      not appeared: check it is actually an audio file (only <code>.mp3</code>, <code>.m4a</code>,
+      <code>.wav</code> and similar are picked up), and that you put it in the shared folder rather
+      than your own My Drive. After ten minutes, tell whoever looks after the tool.</p>
+      <p><strong>"This recording is still being published."</strong> Normal for a minute or two after
+      a recording first appears. Press <em>Check again</em>.</p>
       <p><strong>A student sees "Link problem".</strong> The link was cut short when it was pasted —
       these links are long. Copy it again and re-paste the whole thing.</p>
       <p><strong>A student says they have no plays left before starting.</strong> Someone else used the same
@@ -665,8 +663,14 @@
     return { url: url, kind: "direct", blocked: false };
   }
 
-  /* Where the audio folder lives.
-     Auto-detected on a github.io address; set AUDIO_REPO by hand if you use a custom domain. */
+  /* ---- Settings the administrator fills in once ---- */
+
+  /* The shared Google Drive folder teachers drop recordings into.
+     Paste the folder's web address between the quotes. Leave empty to hide the Drive wording. */
+  var DRIVE_FOLDER_URL = "";  // e.g. "https://drive.google.com/drive/folders/1AbC..."
+
+  /* Which repository holds the audio folder.
+     Auto-detected on a github.io address; set by hand if you use a custom domain. */
   var AUDIO_REPO = "";        // e.g. "jsmith/audiotool"
   var AUDIO_FOLDER = "audio";
 
@@ -899,6 +903,26 @@
         clearTimeout(bail);
         checkState = "bad";
         $("f-check").className = "checkline bad";
+
+        // A file picked from the list but not yet served is the normal case just after
+        // an upload: the list comes from GitHub instantly, the file itself is published
+        // a minute or so later. Say that, rather than implying something is broken.
+        if (n.url.indexOf(folderBase()) === 0) {
+          $("f-check").textContent = "This recording is still being published.";
+          $("f-srcnote").innerHTML = '<div class="note warn"><strong>Nothing is wrong — it just needs another minute.</strong><br>' +
+            "New recordings appear in the list before they are ready to play. " +
+            'Wait a moment and press <em>Check again</em>. <button type="button" class="link" id="f-recheck" style="margin-left:6px">Check again</button></div>';
+          var again = $("f-recheck");
+          if (again) again.addEventListener("click", function () {
+            $("f-check").className = "checkline busy";
+            $("f-check").textContent = "Checking…";
+            $("f-srcnote").innerHTML = "";
+            checkState = "busy";
+            runCheck();
+          });
+          return;
+        }
+
         $("f-check").textContent = "This file could not be loaded.";
         $("f-srcnote").innerHTML = '<div class="note bad">Check that the address opens in a new browser tab ' +
           "and plays, without asking you to sign in. Files kept in this tool's own <strong>audio</strong> folder always work; " +
@@ -913,13 +937,45 @@
 
     /* --- step 2: list the recordings in the audio folder --- */
 
+    /* The "how do I add one" panel depends on how the administrator set things up:
+       with a Drive folder configured, teachers never see GitHub at all. */
+    function renderAddSteps() {
+      var slug = repoSlug();
+      if (DRIVE_FOLDER_URL) {
+        $("step2why").innerHTML = "Pick your recording from the list. If it is not there yet, drop it in the " +
+          "<a href='" + esc(DRIVE_FOLDER_URL) + "' target='_blank' rel='noopener'>shared Drive folder</a> and it will appear within a few minutes.";
+      }
+      if (DRIVE_FOLDER_URL) {
+        $("addsteps").innerHTML =
+          "<ol style='margin-top:11px'>" +
+          "<li>Save your recording as an <strong>MP3</strong>. In most programs that is File → Export → MP3.</li>" +
+          "<li>Give it a name you will recognise in a list, such as <code>french-l2-track1.mp3</code>.</li>" +
+          "<li>Open the <a href='" + esc(DRIVE_FOLDER_URL) + "' target='_blank' rel='noopener'><strong>shared recordings folder</strong> in Google Drive</a> " +
+          "and drag your MP3 into it. That is the whole job.</li>" +
+          "<li>Wait about five minutes, then press <em>Refresh the list</em> above. Your recording will appear.</li>" +
+          "</ol>" +
+          "<p style='font-size:.87rem;margin:11px 0 0;color:var(--muted)'>" +
+          "Recordings are copied out of that Drive folder automatically, so there is nothing else to do. " +
+          "If yours has not appeared after ten minutes, tell whoever looks after this tool.</p>";
+      } else {
+        $("addsteps").innerHTML =
+          "<ol style='margin-top:11px'>" +
+          "<li>Save your recording as an <strong>MP3</strong>. In most programs that is File → Export → MP3.</li>" +
+          "<li>Give it a name with no spaces, such as <code>french-l2-track1.mp3</code>.</li>" +
+          "<li>Open the <a href='" + (slug ? "https://github.com/" + esc(slug) + "/upload/main/" + esc(AUDIO_FOLDER) : "https://github.com") +
+          "' target='_blank' rel='noopener'><strong>upload page</strong></a>, drag your MP3 in, then click <strong>Commit changes</strong>.</li>" +
+          "<li>Wait about a minute, then press <em>Refresh the list</em> above.</li>" +
+          "</ol>" +
+          "<p style='font-size:.87rem;margin:11px 0 0;color:var(--muted)'>" +
+          "No account for that page? Send the file to whoever looks after this tool.</p>";
+      }
+    }
+
     function loadPicker() {
       var slug = repoSlug();
       var hint = $("pickhint"), list = $("picklist");
 
-      $("addlink").href = slug
-        ? "https://github.com/" + slug + "/tree/main/" + AUDIO_FOLDER
-        : "https://github.com";
+      renderAddSteps();
 
       if (!slug) {
         // Custom domain or local file: no folder listing available, so paste a link instead.
