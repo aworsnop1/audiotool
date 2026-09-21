@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Exam Audio Player</title>
+<style>
+  :root {
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --surface-2: #eef1f5;
+    --text: #15181d;
+    --muted: #5b6472;
+    --border: #d9dee5;
+    --accent: #1a5fd0;
+    --accent-hover: #164fae;
+    --accent-soft: #e8f0fd;
+    --accent-text: #ffffff;
+    --ok: #16794a;
+    --ok-bg: #e6f4ec;
+    --warn: #8a5300;
+    --warn-bg: #fdf3e2;
+    --danger: #b02a1f;
+    --danger-bg: #fdecea;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 20px rgba(16,24,40,.06);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12141a; --surface: #1b1e26; --surface-2: #232733; --text: #eef1f6;
+      --muted: #9aa4b4; --border: #333948; --accent: #5b9bff; --accent-hover: #7cb0ff;
+      --accent-soft: #1c2a42; --accent-text: #0b1220; --ok: #5fd39b; --ok-bg: #143026;
+      --warn: #f0b95c; --warn-bg: #33270f; --danger: #ff8d80; --danger-bg: #3a1c19;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12141a; --surface: #1b1e26; --surface-2: #232733; --text: #eef1f6;
+    --muted: #9aa4b4; --border: #333948; --accent: #5b9bff; --accent-hover: #7cb0ff;
+    --accent-soft: #1c2a42; --accent-text: #0b1220; --ok: #5fd39b; --ok-bg: #143026;
+    --warn: #f0b95c; --warn-bg: #33270f; --danger: #ff8d80; --danger-bg: #3a1c19;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 700px; margin: 0 auto; padding: 28px 16px 90px; }
+  a { color: var(--accent); }
+
+  /* ---------- builder chrome ---------- */
+  .bhead { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+  .bhead h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.02em; }
+  .bhead a { font-size: .88rem; font-weight: 600; }
+
+  .steps { display: flex; gap: 8px; margin-bottom: 22px; }
+  .steps > div { flex: 1; }
+  .steps .rail { height: 5px; border-radius: 99px; background: var(--surface-2); }
+  .steps .rail.on { background: var(--accent); }
+  .steps .lab { font-size: .72rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-top: 7px; }
+  .steps .lab.on { color: var(--accent); }
+  @media (max-width: 520px) { .steps .lab { display: none; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 26px 24px;
+  }
+  .stepnum { font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .card h2 { font-size: 1.28rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .card .why { color: var(--muted); font-size: .95rem; margin: 0 0 22px; }
+
+  .q { font-weight: 650; font-size: 1rem; margin: 26px 0 4px; }
+  .why + .q, details.adv > div > .q:first-child { margin-top: 0; }
+  .qhint { color: var(--muted); font-size: .87rem; margin: 0 0 12px; }
+
+  input[type="text"], input[type="url"], input[type="number"], textarea {
+    width: 100%; padding: 12px 13px; font: inherit; font-size: 1rem;
+    color: var(--text); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 9px;
+  }
+  textarea { resize: vertical; min-height: 76px; font-size: .95rem; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  /* option cards */
+  .opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .opt {
+    text-align: left; cursor: pointer; font: inherit;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; color: var(--text);
+  }
+  .opt:hover { border-color: var(--accent); }
+  .opt strong { display: block; font-size: .98rem; font-weight: 650; }
+  .opt span { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .opt[aria-pressed="true"] strong { color: var(--accent); }
+
+  .custombox { margin-top: 12px; display: none; }
+  .custombox.show { display: block; }
+  .custombox label { font-size: .87rem; color: var(--muted); display: block; margin-bottom: 5px; }
+  .custombox input { max-width: 190px; }
+
+  button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    border-radius: 9px; border: 1.5px solid transparent;
+    padding: 12px 20px; background: var(--accent); color: var(--accent-text);
+  }
+  button:hover { background: var(--accent-hover); }
+  button.ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  button.ghost:hover { background: var(--surface-2); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.link { background: none; border: none; color: var(--accent); padding: 0; font-size: .87rem; font-weight: 600; text-decoration: underline; }
+  button.link:hover { background: none; }
+
+  .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .nav .spacer { flex: 1; }
+
+  .note { border-radius: 9px; padding: 12px 14px; font-size: .88rem; margin-top: 14px; }
+  .note.ok { background: var(--ok-bg); color: var(--ok); }
+  .note.warn { background: var(--warn-bg); color: var(--warn); }
+  .note.bad { background: var(--danger-bg); color: var(--danger); }
+  .note strong { font-weight: 700; }
+  .note ul { margin: 7px 0 0; padding-left: 19px; }
+  .note li { margin: 3px 0; }
+
+  .howto {
+    background: var(--surface-2); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px;
+  }
+  .howto h3 { font-size: .9rem; margin: 0 0 9px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .howto ol { margin: 0; padding-left: 20px; font-size: .9rem; }
+  .howto li { margin: 5px 0; }
+  .howto details { margin-top: 10px; }
+  .howto summary { cursor: pointer; font-size: .87rem; font-weight: 600; color: var(--accent); }
+  .howto details ol { margin-top: 9px; }
+
+  .outurl {
+    font-family: var(--mono); font-size: .78rem; word-break: break-all;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 9px; padding: 13px; margin: 14px 0;
+  }
+  .btnrow { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .summary {
+    border-left: 3px solid var(--accent); padding: 4px 0 4px 15px;
+    font-size: .97rem; margin: 4px 0 20px;
+  }
+  .checkline { font-size: .9rem; margin-top: 10px; min-height: 1.4em; }
+  .checkline.good { color: var(--ok); font-weight: 600; }
+  .checkline.bad { color: var(--danger); }
+  .checkline.busy { color: var(--muted); }
+
+  details.adv { border-top: 1px solid var(--border); margin-top: 26px; padding-top: 18px; }
+  details.adv summary { cursor: pointer; font-weight: 650; font-size: .92rem; }
+  details.adv > div { padding-top: 18px; }
+
+  footer.tiny { text-align: center; color: var(--muted); font-size: .78rem; margin-top: 26px; }
+
+  /* ---------- help / printable guide ---------- */
+  #help { display: none; }
+  #help .wrap { max-width: 720px; }
+  #help h1 { font-size: 1.7rem; letter-spacing: -0.02em; margin: 0 0 6px; }
+  #help .sub { color: var(--muted); margin: 0 0 26px; }
+  #help section { margin-bottom: 30px; }
+  #help h2 {
+    font-size: 1.1rem; margin: 0 0 12px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent); display: inline-block;
+  }
+  #help ol { padding-left: 22px; margin: 0; }
+  #help ol > li { margin: 10px 0; }
+  #help ul { padding-left: 20px; }
+  #help .kbd {
+    font-family: var(--mono); font-size: .85em; background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
+  }
+  @media print {
+    body { background: #fff; color: #000; font-size: 11pt; }
+    .noprint { display: none !important; }
+    #help section { break-inside: avoid; }
+    #help h2 { border-color: #000; }
+    .note { border: 1px solid #999; background: #fff !important; color: #000 !important; }
+  }
+
+  /* ---------- Player ---------- */
+  #player { display: none; }
+  .pwrap {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+  }
+  .pcard {
+    width: 100%; max-width: 560px; text-align: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; box-shadow: var(--shadow); padding: 34px 26px;
+  }
+  .ptitle { font-size: 1.35rem; font-weight: 650; margin: 0 0 6px; letter-spacing: -0.02em; }
+  .pinstr { color: var(--muted); font-size: .95rem; margin: 0 0 24px; white-space: pre-wrap; }
+  .pstatus { font-size: .82rem; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .pbig { font-size: 3.2rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; line-height: 1.1; margin: 8px 0 4px; }
+  .psub { color: var(--muted); font-size: .92rem; margin-bottom: 22px; }
+  .bar { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 18px 0 8px; }
+  .bar > i { display: block; height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width .25s linear; }
+  .times { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; font-size: .85rem; color: var(--muted); margin-bottom: 20px; }
+  .pbtn { font-size: 1.05rem; padding: 15px 40px; border-radius: 10px; }
+  .pills { display: flex; gap: 7px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .pill { font-size: .78rem; font-weight: 600; padding: 4px 11px; border-radius: 99px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--border); }
+  .pill.done { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+  .pill.live { background: var(--accent); color: var(--accent-text); border-color: transparent; }
+  .banner {
+    position: sticky; top: 0; z-index: 10; text-align: center;
+    background: var(--warn-bg); color: var(--warn);
+    font-size: .85rem; font-weight: 600; padding: 9px 14px; border-bottom: 1px solid var(--border);
+  }
+  .banner button { font-size: .8rem; padding: 4px 10px; margin-left: 10px; background: var(--warn); color: var(--warn-bg); }
+  .spin {
+    width: 34px; height: 34px; margin: 10px auto 18px;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: sp 0.9s linear infinite;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.5s; } .bar > i { transition: none; } }
+  .nosel { user-select: none; -webkit-user-select: none; }
+</style>
+</head>
+<body>
+
+<!-- ============================ BUILDER ============================ -->
+<div id="builder">
+  <div class="wrap">
+    <div class="bhead">
+      <h1>Exam Audio Player</h1>
+      <a href="?help" id="b-help">Step-by-step instructions</a>
+    </div>
+
+    <div class="steps" id="stepdots"></div>
+
+    <!-- STEP 1 -->
+    <div class="card" data-step="1">
+      <div class="stepnum">Step 1 of 4</div>
+      <h2>Name the recording</h2>
+      <p class="why">This is the heading students will see on the page. It is only a label — it does not affect how the audio plays.</p>
+
+      <div class="q">What should students see at the top of the page?</div>
+      <p class="qhint">For example: <em>Level 2 French — Listening, Track 1</em></p>
+      <input type="text" id="f-title" placeholder="Level 2 French — Listening, Track 1" autocomplete="off">
+
+      <div class="nav">
+        <button type="button" class="link noprint" id="f-load">Editing an existing link? Paste it here</button>
+        <div class="spacer"></div>
+        <button type="button" data-go="2">Next</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="card" data-step="2" style="display:none">
+      <div class="stepnum">Step 2 of 4</div>
+      <h2>Add your audio file</h2>
+      <p class="why">Your recording needs to live somewhere online. Google Drive is the easiest place.</p>
+
+      <div class="howto">
+        <h3>Getting a link from Google Drive</h3>
+        <ol>
+          <li>Upload your MP3 to Google Drive.</li>
+          <li>Right-click the file and choose <strong>Share</strong>.</li>
+          <li>Under <em>General access</em>, change <strong>Restricted</strong> to <strong>Anyone with the link</strong>. This step is essential — students cannot sign in during an exam.</li>
+          <li>Click <strong>Copy link</strong>, then paste it in the box below.</li>
+        </ol>
+        <details>
+          <summary>Using OneDrive or Dropbox instead?</summary>
+          <ol>
+            <li>Upload the file, then choose <strong>Share</strong> or <strong>Copy link</strong>.</li>
+            <li>Set the link so that <strong>anyone with the link</strong> can open it, with no sign-in required.</li>
+            <li>Paste it below. It will be converted automatically.</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="q">Paste the link to your recording</div>
+      <input type="url" id="f-src" placeholder="Paste the link here" autocomplete="off" spellcheck="false">
+      <div class="checkline" id="f-check"></div>
+      <div id="f-srcnote"></div>
+      <audio id="f-testaudio" style="display:none"></audio>
+
+      <div class="nav">
+        <button type="button" class="ghost" data-go="1">Back</button>
+        <div class="spacer"></div>
+        <button type="button" data-go="3" id="f-next2">Next</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="card" data-step="3" style="display:none">
+      <div class="stepnum">Step 3 of 4</div>
+      <h2>Set the rules</h2>
+      <p class="why">Students can never pause, rewind or skip. These settings control how many times they hear it and how long they get to read.</p>
+
+      <div class="q">How many times may students hear it?</div>
+      <div class="opts" id="o-plays">
+        <button type="button" class="opt" data-value="1"><strong>Once</strong><span>One play only</span></button>
+        <button type="button" class="opt" data-value="2"><strong>Twice</strong><span>The usual choice</span></button>
+        <button type="button" class="opt" data-value="3"><strong>Three times</strong><span>For longer passages</span></button>
+        <button type="button" class="opt" data-value="0"><strong>Unlimited</strong><span>For practice, not exams</span></button>
+      </div>
+
+      <div class="q">Quiet time before it starts?</div>
+      <p class="qhint">Students see a countdown and can read the questions. The recording then starts by itself.</p>
+      <div class="opts" id="o-reading">
+        <button type="button" class="opt" data-value="0"><strong>None</strong><span>Starts straight away</span></button>
+        <button type="button" class="opt" data-value="30"><strong>30 seconds</strong></button>
+        <button type="button" class="opt" data-value="60"><strong>1 minute</strong></button>
+        <button type="button" class="opt" data-value="-1"><strong>Something else</strong></button>
+      </div>
+      <div class="custombox" id="c-reading">
+        <label for="f-reading">Quiet time in seconds</label>
+        <input type="number" id="f-reading" min="0" max="1800" step="5" value="45">
+      </div>
+
+      <div id="gapblock">
+        <div class="q">Gap between plays?</div>
+        <p class="qhint">Time for students to write before the recording plays again.</p>
+        <div class="opts" id="o-gap">
+          <button type="button" class="opt" data-value="0"><strong>None</strong><span>Plays again immediately</span></button>
+          <button type="button" class="opt" data-value="30"><strong>30 seconds</strong></button>
+          <button type="button" class="opt" data-value="60"><strong>1 minute</strong></button>
+          <button type="button" class="opt" data-value="-1"><strong>Something else</strong></button>
+        </div>
+        <div class="custombox" id="c-gap">
+          <label for="f-gap">Gap in seconds</label>
+          <input type="number" id="f-gap" min="0" max="1800" step="5" value="90">
+        </div>
+      </div>
+
+      <details class="adv">
+        <summary>More options (most people can skip this)</summary>
+        <div>
+          <div class="q">Extra instructions on the page</div>
+          <p class="qhint">Optional. Shown under the title, before students press Start.</p>
+          <textarea id="f-instr" placeholder="You may take notes at any time."></textarea>
+
+          <div class="q">After the gap</div>
+          <div class="opts" id="o-auto">
+            <button type="button" class="opt" data-value="1"><strong>Play again automatically</strong><span>Everyone keeps the same timing</span></button>
+            <button type="button" class="opt" data-value="0"><strong>Wait for the student</strong><span>They press Play when ready</span></button>
+          </div>
+
+          <div class="q">What students can see while it plays</div>
+          <div class="opts" id="o-prog">
+            <button type="button" class="opt" data-value="2"><strong>Bar and timer</strong><span>How far through, and how long</span></button>
+            <button type="button" class="opt" data-value="1"><strong>Bar only</strong><span>No times shown</span></button>
+            <button type="button" class="opt" data-value="0"><strong>Nothing</strong><span>No clue how long is left</span></button>
+          </div>
+        </div>
+      </details>
+
+      <div class="nav">
+        <button type="button" class="ghost" data-go="2">Back</button>
+        <div class="spacer"></div>
+        <button type="button" id="f-make">Create my link</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="card" data-step="4" style="display:none">
+      <div class="stepnum">Step 4 of 4</div>
+      <h2>Your link is ready</h2>
+      <p class="why" id="f-summary"></p>
+
+      <div class="outurl" id="f-outurl"></div>
+      <div class="btnrow">
+        <button type="button" id="f-copy">Copy link</button>
+        <button type="button" class="ghost" id="f-preview">Try it out first</button>
+      </div>
+      <div class="note ok" style="margin-top:16px">
+        <strong>Try it out before exam day.</strong> The preview button opens the page exactly as students will see it,
+        but does not use up any plays. Listen right through at least once.
+      </div>
+
+      <div class="q">What to do next</div>
+      <ol style="padding-left:20px;margin:0;font-size:.95rem">
+        <li style="margin:7px 0">Press <strong>Copy link</strong> above.</li>
+        <li style="margin:7px 0">Open your exam in DigiExam and go to the listening question.</li>
+        <li style="margin:7px 0">Paste the link into the question so students can click it.</li>
+        <li style="margin:7px 0">Add a line for students, for example: <em>Click the link and press Start. You cannot pause or rewind.</em></li>
+        <li style="margin:7px 0">Run the exam in DigiExam's own preview on a student device to check the sound works.</li>
+      </ol>
+
+      <div class="note warn" style="margin-top:16px">
+        <strong>One-off job for your IT or exams administrator.</strong>
+        DigiExam only lets students open approved websites. Ask them to allow
+        <span id="f-domcount">the address below</span>. This only needs doing once, not for every exam.
+        <ul id="f-domains"></ul>
+      </div>
+      <div id="f-domnote"></div>
+
+      <div class="nav">
+        <button type="button" class="ghost" data-go="3">Back and change something</button>
+        <div class="spacer"></div>
+        <button type="button" class="ghost" id="f-restart">Make another one</button>
+      </div>
+    </div>
+
+    <footer class="tiny">Nothing is uploaded or saved here — all your settings travel inside the link itself.</footer>
+  </div>
+</div>
+
+<!-- ============================ HELP / PRINTABLE GUIDE ============================ -->
+<div id="help">
+  <div class="wrap">
+    <div class="bhead noprint">
+      <h1 style="font-size:1.35rem">Instructions</h1>
+      <div class="btnrow">
+        <button type="button" class="ghost" id="h-print">Print</button>
+        <button type="button" id="h-back">Back to the tool</button>
+      </div>
+    </div>
+
+    <h1>Making a listening exam that cannot be paused or rewound</h1>
+    <p class="sub">A step-by-step guide. Allow about ten minutes the first time, and two minutes after that.</p>
+
+    <section>
+      <h2>What this does</h2>
+      <p>You give it an audio file and a few settings. It gives you back a web link. When a student opens
+      that link and presses <strong>Start</strong>, the recording plays from beginning to end. They cannot
+      pause it, rewind it, skip ahead or speed it up, and they only get the number of plays you allow —
+      even if they reload the page.</p>
+      <p>You paste that link into DigiExam. Every exam you make gets its own link. You do not need a new
+      tool or a new account each time.</p>
+    </section>
+
+    <section>
+      <h2>Before you start</h2>
+      <ul>
+        <li>Your recording saved as an <strong>MP3</strong> (or M4A). If yours is a WAV, it will work but will be slow to load — converting it to MP3 is worth the minute it takes.</li>
+        <li>Somewhere to put it online. <strong>Google Drive is the easiest.</strong></li>
+        <li>Your DigiExam exam, ready to add a question to.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Step 1 — Put the recording online</h2>
+      <ol>
+        <li>Open Google Drive and upload your MP3.</li>
+        <li>Right-click the file and choose <strong>Share</strong>.</li>
+        <li>Look for the section called <em>General access</em>. It usually says <strong>Restricted</strong>.</li>
+        <li>Click it and change it to <strong>Anyone with the link</strong>.
+          <br><strong>Do not skip this.</strong> Students cannot sign in to Google during an exam, so if the
+          file stays Restricted they will see nothing but an error.</li>
+        <li>Click <strong>Copy link</strong>. Leave the window open in case you need it again.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Step 2 — Build the link</h2>
+      <ol>
+        <li>Open the Exam Audio Player page (the address your IT team gave you — bookmark it).</li>
+        <li><strong>Name the recording.</strong> Type what students should see at the top, such as
+          <em>Level 2 French — Listening, Track 1</em>. Press <span class="kbd">Next</span>.</li>
+        <li><strong>Paste your Google Drive link</strong> into the box. Wait a moment — the page checks the
+          link by itself and tells you either how long the recording is, or what is wrong with it.
+          <br>If it says it cannot load the file, the cause is almost always the sharing setting in Step 1.
+          Go back and fix it, then paste the link again. Press <span class="kbd">Next</span>.</li>
+        <li><strong>Set the rules.</strong> Choose how many times students may hear it, how much quiet
+          reading time they get first, and how long the gap between plays should be. Press
+          <span class="kbd">Create my link</span>.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Step 3 — Test it yourself</h2>
+      <ol>
+        <li>Press <strong>Try it out first</strong>. This opens the page exactly as students will see it,
+          but nothing you do counts against the play limit.</li>
+        <li>Press Start and <strong>listen right through</strong>. Check the sound is clear and loud enough —
+          there is no volume control beyond the device's own.</li>
+        <li>Check the reading time and gap feel right. If not, close the tab, press
+          <strong>Back and change something</strong>, and create the link again.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Step 4 — Put it into DigiExam</h2>
+      <ol>
+        <li>Press <strong>Copy link</strong>.</li>
+        <li>Open your exam in DigiExam and go to the listening question.</li>
+        <li>Paste the link into the question so students can click it.</li>
+        <li>Add a sentence telling students what to expect, for example:
+          <br><em>Click the link and press Start when you are ready. The recording cannot be paused,
+          rewound or replayed beyond the plays allowed.</em></li>
+        <li><strong>The one-off bit:</strong> DigiExam only lets students open approved websites. The first
+          time anyone at school uses this, ask IT or your exams administrator to allow the player's address
+          and <span class="kbd">drive.google.com</span>. Once that is done it covers every exam, so you
+          never have to ask again.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Step 5 — On the day</h2>
+      <ul>
+        <li>Tell students beforehand that it cannot be paused, and to have pen and paper ready.</li>
+        <li>Have students test their headphones before the exam starts.</li>
+        <li>Keep a backup: a copy of the audio you can play over a speaker if a device misbehaves.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>If something goes wrong</h2>
+      <p><strong>"Could not load" when you paste the link.</strong> The sharing setting is still Restricted.
+      Go back to Drive, Share, and set it to <em>Anyone with the link</em>.</p>
+      <p><strong>A student sees "Link problem".</strong> The link was cut short when it was pasted —
+      these links are long. Copy it again and re-paste the whole thing.</p>
+      <p><strong>A student says they have no plays left before starting.</strong> Someone else used the same
+      device for the same exam within the last six hours. Clear the browser's site data on that device,
+      or move the student to another one.</p>
+      <p><strong>A student's audio stopped partway.</strong> Almost always their network. The page loads the
+      whole recording before enabling Start where it can, so this is rare — but this is what your speaker
+      backup is for.</p>
+      <p><strong>You need to change an exam you have already built.</strong> Open the tool, press
+      <em>Editing an existing link? Paste it here</em> on the first screen, paste your old link, and all the
+      settings come back. Change what you need, create a new link, and swap it in DigiExam.</p>
+    </section>
+
+    <div class="btnrow noprint" style="margin-top:30px">
+      <button type="button" id="h-back2">Back to the tool</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PLAYER ============================ -->
+<div id="player">
+  <div id="pv-banner" class="banner" style="display:none">
+    Preview mode — plays are not counted.
+    <button type="button" id="pv-exit">Open builder</button>
+  </div>
+  <div class="pwrap">
+    <div class="pcard nosel">
+      <h1 class="ptitle" id="p-title">Listening</h1>
+      <p class="pinstr" id="p-instr"></p>
+      <div class="pills" id="p-pills"></div>
+
+      <div id="p-loading">
+        <div class="spin"></div>
+        <div class="psub" id="p-loadmsg">Loading audio…</div>
+      </div>
+
+      <div id="p-main" style="display:none">
+        <div class="pstatus" id="p-status">Ready</div>
+        <div class="pbig" id="p-big"></div>
+        <div class="psub" id="p-sub"></div>
+        <div id="p-progwrap" style="display:none">
+          <div class="bar"><i id="p-bar"></i></div>
+          <div class="times" id="p-times"><span id="p-el">0:00</span><span id="p-tot">0:00</span></div>
+        </div>
+        <button type="button" class="pbtn" id="p-btn">Start</button>
+      </div>
+
+      <div id="p-error" style="display:none"></div>
+    </div>
+  </div>
+  <audio id="p-audio" preload="auto"></audio>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- shared helpers ---------------- */
+
+  function b64urlEncode(str) {
+    var bytes = new TextEncoder().encode(str), bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function b64urlDecode(s) {
+    s = String(s).replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function fnv1a(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h.toString(36);
+  }
+  function mmss(sec) {
+    if (!isFinite(sec) || sec < 0) sec = 0;
+    var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function $(id) { return document.getElementById(id); }
+  function pack(cfg) { var j = JSON.stringify(cfg); return b64urlEncode(j) + "." + fnv1a(j); }
+  function unpack(s) {
+    var dot = String(s).lastIndexOf(".");
+    if (dot < 0) throw new Error("bad link");
+    var json = b64urlDecode(s.slice(0, dot));
+    if (fnv1a(json) !== s.slice(dot + 1)) throw new Error("tampered link");
+    var cfg = JSON.parse(json);
+    if (!cfg || !cfg.s) throw new Error("no source");
+    return cfg;
+  }
+
+  /* Turn a normal cloud share link into one an <audio> tag can read. */
+  function normaliseUrl(raw) {
+    var url = String(raw || "").trim();
+    if (!url) return { url: "", kind: "", note: "" };
+
+    var m = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/) ||
+            url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/) ||
+            url.match(/drive\.google\.com\/uc\?[^#]*id=([A-Za-z0-9_-]+)/);
+    if (m) {
+      return {
+        url: "https://drive.google.com/uc?export=download&id=" + m[1],
+        kind: "drive",
+        note: "Google Drive link recognised. Keep the file under about 90 MB."
+      };
+    }
+    if (/dropbox\.com/.test(url)) {
+      return {
+        url: url.replace(/^https?:\/\/(www\.)?dropbox\.com/, "https://dl.dropboxusercontent.com")
+                .replace(/[?&]dl=0/, "").replace(/[?&]dl=1/, ""),
+        kind: "dropbox",
+        note: "Dropbox link recognised."
+      };
+    }
+    if (/sharepoint\.com|1drv\.ms|onedrive\.live\.com/.test(url)) {
+      if (!/[?&]download=1/.test(url)) url += (url.indexOf("?") === -1 ? "?" : "&") + "download=1";
+      return {
+        url: url,
+        kind: "onedrive",
+        note: "OneDrive or SharePoint link recognised. The sharing setting must not require signing in — students cannot log in during an exam."
+      };
+    }
+    return { url: url, kind: "direct", note: "" };
+  }
+
+  /* ---------------- routing ---------------- */
+
+  var params = new URLSearchParams(location.search);
+  var packed = params.get("c");
+
+  if (params.has("help")) { showHelp(); return; }
+
+  if (packed) {
+    try {
+      startPlayer(packed, params.get("preview") === "1");
+    } catch (e) {
+      $("builder").style.display = "none";
+      $("player").style.display = "block";
+      $("p-title").textContent = "Link problem";
+      $("p-instr").style.display = "none";
+      $("p-loading").style.display = "none";
+      $("p-main").style.display = "none";
+      $("p-error").style.display = "block";
+      $("p-error").innerHTML = '<div class="note bad">This link is incomplete or has been altered, so the audio cannot be played. ' +
+        "Please tell your supervisor and ask your teacher for a fresh link.</div>";
+    }
+    return;
+  }
+  startBuilder();
+
+  /* ============================ HELP ============================ */
+
+  function showHelp() {
+    $("builder").style.display = "none";
+    $("help").style.display = "block";
+    document.title = "How to use the Exam Audio Player";
+    $("h-print").addEventListener("click", function () { window.print(); });
+    function back() { location.href = location.origin + location.pathname; }
+    $("h-back").addEventListener("click", back);
+    $("h-back2").addEventListener("click", back);
+  }
+
+  /* ============================ BUILDER ============================ */
+
+  function startBuilder() {
+    $("builder").style.display = "block";
+
+    var STEP_LABELS = ["Name", "Audio", "Rules", "Link"];
+    var step = 1;
+    var lastLink = "";
+    var checkedUrl = "";      // the normalised URL the check succeeded on
+    var checkState = "empty"; // empty | busy | good | bad
+
+    /* --- step navigation --- */
+
+    function renderDots() {
+      $("stepdots").innerHTML = STEP_LABELS.map(function (lab, i) {
+        var on = (i + 1) <= step;
+        return '<div><div class="rail' + (on ? " on" : "") + '"></div>' +
+               '<div class="lab' + (on ? " on" : "") + '">' + lab + "</div></div>";
+      }).join("");
+    }
+
+    function goto(n) {
+      step = n;
+      Array.prototype.forEach.call(document.querySelectorAll("[data-step]"), function (el) {
+        el.style.display = (el.getAttribute("data-step") === String(n)) ? "" : "none";
+      });
+      renderDots();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-go]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var target = parseInt(btn.getAttribute("data-go"), 10);
+        if (target === 3 && !guardStep2()) return;
+        goto(target);
+      });
+    });
+
+    function guardStep2() {
+      if (checkState === "good") return true;
+      if (checkState === "empty") {
+        $("f-check").className = "checkline bad";
+        $("f-check").textContent = "Please paste the link to your recording first.";
+        $("f-src").focus();
+        return false;
+      }
+      if (checkState === "busy") {
+        $("f-check").className = "checkline busy";
+        $("f-check").textContent = "Still checking the link — give it a moment.";
+        return false;
+      }
+      // bad: let them through only if they insist
+      return window.confirm(
+        "This link could not be loaded, so students may see an error too.\n\n" +
+        "The usual cause is the file's sharing setting.\n\nContinue anyway?"
+      );
+    }
+
+    /* --- option cards --- */
+
+    var picks = { plays: 2, reading: 0, gap: 30, auto: 1, prog: 2 };
+
+    function wireOpts(groupId, key, onPick) {
+      var group = $(groupId);
+      group.addEventListener("click", function (e) {
+        var btn = e.target.closest ? e.target.closest(".opt") : null;
+        if (!btn || !group.contains(btn)) return;
+        setPick(groupId, key, parseInt(btn.getAttribute("data-value"), 10), onPick);
+      });
+    }
+
+    function setPick(groupId, key, value, onPick) {
+      var group = $(groupId);
+      Array.prototype.forEach.call(group.querySelectorAll(".opt"), function (b) {
+        b.setAttribute("aria-pressed", parseInt(b.getAttribute("data-value"), 10) === value ? "true" : "false");
+      });
+      picks[key] = value;
+      if (onPick) onPick(value);
+    }
+
+    wireOpts("o-plays", "plays", function (v) {
+      // A single play or unlimited plays makes the gap question meaningless.
+      $("gapblock").style.display = (v === 1 || v === 0) ? "none" : "";
+    });
+    wireOpts("o-reading", "reading", function (v) {
+      $("c-reading").className = "custombox" + (v === -1 ? " show" : "");
+      if (v === -1) $("f-reading").focus();
+    });
+    wireOpts("o-gap", "gap", function (v) {
+      $("c-gap").className = "custombox" + (v === -1 ? " show" : "");
+      if (v === -1) $("f-gap").focus();
+    });
+    wireOpts("o-auto", "auto");
+    wireOpts("o-prog", "prog");
+
+    function applyPicks(p) {
+      setPick("o-plays", "plays", p.plays, function (v) {
+        $("gapblock").style.display = (v === 1 || v === 0) ? "none" : "";
+      });
+      var rPreset = [0, 30, 60].indexOf(p.reading) !== -1;
+      setPick("o-reading", "reading", rPreset ? p.reading : -1, function (v) {
+        $("c-reading").className = "custombox" + (v === -1 ? " show" : "");
+      });
+      if (!rPreset) $("f-reading").value = p.reading;
+      var gPreset = [0, 30, 60].indexOf(p.gap) !== -1;
+      setPick("o-gap", "gap", gPreset ? p.gap : -1, function (v) {
+        $("c-gap").className = "custombox" + (v === -1 ? " show" : "");
+      });
+      if (!gPreset) $("f-gap").value = p.gap;
+      setPick("o-auto", "auto", p.auto);
+      setPick("o-prog", "prog", p.prog);
+    }
+
+    applyPicks(picks);
+
+    function resolved(key) {
+      if (picks[key] !== -1) return picks[key];
+      var el = $(key === "reading" ? "f-reading" : "f-gap");
+      return Math.max(0, Math.min(1800, parseInt(el.value, 10) || 0));
+    }
+
+    /* --- step 2: check the audio link --- */
+
+    var srcEl = $("f-src");
+    var checkTimer = null;
+
+    srcEl.addEventListener("input", function () {
+      clearTimeout(checkTimer);
+      checkState = "empty";
+      $("f-check").className = "checkline";
+      $("f-check").textContent = "";
+      $("f-srcnote").innerHTML = "";
+      if (!srcEl.value.trim()) return;
+      checkState = "busy";
+      $("f-check").className = "checkline busy";
+      $("f-check").textContent = "Checking the link…";
+      checkTimer = setTimeout(runCheck, 700);
+    });
+    srcEl.addEventListener("paste", function () {
+      setTimeout(function () { srcEl.dispatchEvent(new Event("input")); }, 0);
+    });
+
+    function runCheck() {
+      var n = normaliseUrl(srcEl.value);
+      if (!n.url) { checkState = "empty"; return; }
+
+      $("f-srcnote").innerHTML = n.note ? '<div class="note warn">' + esc(n.note) + "</div>" : "";
+
+      var a = $("f-testaudio");
+      var settled = false;
+      a.pause();
+      a.src = n.url;
+
+      function good() {
+        if (settled) return; settled = true;
+        clearTimeout(bail);
+        checkState = "good";
+        checkedUrl = n.url;
+        $("f-check").className = "checkline good";
+        $("f-check").textContent = isFinite(a.duration)
+          ? "Link works — the recording is " + mmss(a.duration) + " long."
+          : "Link works.";
+      }
+      function bad() {
+        if (settled) return; settled = true;
+        clearTimeout(bail);
+        checkState = "bad";
+        $("f-check").className = "checkline bad";
+        $("f-check").textContent = "This link could not be loaded.";
+        var advice = n.kind === "drive"
+          ? "In Google Drive, right-click the file, choose <strong>Share</strong>, and change <em>General access</em> from <strong>Restricted</strong> to <strong>Anyone with the link</strong>. Then copy the link again and paste it here."
+          : n.kind === "onedrive"
+          ? "In OneDrive, open <strong>Share</strong> and set the link so <strong>anyone with the link</strong> can open it without signing in. Then copy it again."
+          : "Check the link opens in a new browser tab without asking you to sign in, and that it points straight at the audio file.";
+        $("f-srcnote").innerHTML = '<div class="note bad"><strong>Almost always the sharing setting.</strong><br>' + advice + "</div>";
+      }
+
+      a.addEventListener("loadedmetadata", good, { once: true });
+      a.addEventListener("error", bad, { once: true });
+      a.load();
+      var bail = setTimeout(bad, 15000);
+    }
+
+    /* --- step 1: reload an existing link --- */
+
+    $("f-load").addEventListener("click", function () {
+      var pasted = window.prompt("Paste a link you made earlier and its settings will be loaded back in:");
+      if (!pasted) return;
+      var c;
+      try {
+        var q = pasted.indexOf("?") >= 0 ? pasted.slice(pasted.indexOf("?") + 1) : pasted;
+        var got = new URLSearchParams(q).get("c");
+        c = unpack(got || pasted.trim());
+      } catch (e) {
+        alert("That does not look like a link made by this tool, or it was cut short when copied.");
+        return;
+      }
+      $("f-title").value = c.t || "";
+      $("f-instr").value = c.i || "";
+      srcEl.value = c.s || "";
+      applyPicks({ plays: c.p | 0, reading: c.r | 0, gap: c.g | 0, auto: c.a | 0, prog: c.d | 0 });
+      srcEl.dispatchEvent(new Event("input"));
+      goto(2);
+    });
+
+    /* --- step 3 → 4: build the link --- */
+
+    function baseUrl() { return location.origin + location.pathname; }
+
+    function plainSummary(cfg) {
+      var bits = [];
+      var times = { 0: "as many times as they like", 1: "once", 2: "twice", 3: "three times" }[cfg.p] || (cfg.p + " times");
+      bits.push("Students will hear “" + cfg.t + "” " + times + ".");
+      if (cfg.r > 0) bits.push("They get " + human(cfg.r) + " of quiet reading time first.");
+      if (cfg.p !== 1 && cfg.p !== 0 && cfg.g > 0) {
+        bits.push("There is a " + human(cfg.g) + " gap between plays" + (cfg.a ? ", then it plays again by itself." : ", then they press Play again."));
+      }
+      bits.push("They cannot pause, rewind or skip.");
+      return bits.join(" ");
+    }
+    function human(s) {
+      if (s < 60) return s + " seconds";
+      var m = Math.floor(s / 60), r = s % 60;
+      return m + (m === 1 ? " minute" : " minutes") + (r ? " " + r + " seconds" : "");
+    }
+
+    $("f-make").addEventListener("click", function () {
+      var n = normaliseUrl(srcEl.value);
+      if (!n.url) { goto(2); guardStep2(); return; }
+
+      var plays = picks.plays;
+      var cfg = {
+        v: 1,
+        s: n.url,
+        t: ($("f-title").value || "Listening").trim(),
+        i: $("f-instr").value.trim(),
+        p: plays,
+        r: resolved("reading"),
+        g: (plays === 1 || plays === 0) ? 0 : resolved("gap"),
+        a: picks.auto ? 1 : 0,
+        d: picks.prog
+      };
+
+      lastLink = baseUrl() + "?c=" + pack(cfg);
+      $("f-outurl").textContent = lastLink;
+      $("f-summary").textContent = plainSummary(cfg);
+
+      // Which domains the exam administrator has to allow.
+      var doms = [];
+      try {
+        doms.push(location.hostname || "this page's address");
+        var audioHost = new URL(cfg.s, location.href).hostname;
+        if (audioHost && audioHost !== location.hostname) doms.push(audioHost);
+      } catch (e) {}
+      $("f-domains").innerHTML = doms.map(function (d) {
+        return "<li><strong>" + esc(d) + "</strong></li>";
+      }).join("");
+      $("f-domcount").textContent = doms.length > 1 ? "both addresses below" : "the address below";
+
+      $("f-domnote").innerHTML = (location.protocol === "file:")
+        ? '<div class="note bad">This page is open as a file on your own computer, so the link above will only work here. ' +
+          "Ask IT for the proper web address of this tool and use that instead.</div>"
+        : "";
+
+      goto(4);
+    });
+
+    $("f-copy").addEventListener("click", function () {
+      var btn = this;
+      navigator.clipboard.writeText(lastLink).then(function () {
+        btn.textContent = "Copied ✓";
+        setTimeout(function () { btn.textContent = "Copy link"; }, 2000);
+      }, function () {
+        window.prompt("Copy this link:", lastLink);
+      });
+    });
+
+    $("f-preview").addEventListener("click", function () {
+      window.open(lastLink + "&preview=1", "_blank");
+    });
+
+    $("f-restart").addEventListener("click", function () {
+      location.href = baseUrl();
+    });
+
+    renderDots();
+  }
+
+  /* ============================ PLAYER ============================ */
+
+  function startPlayer(packedStr, preview) {
+    var cfg = unpack(packedStr);
+    var json = JSON.stringify(cfg);
+
+    $("builder").style.display = "none";
+    $("player").style.display = "block";
+    if (preview) $("pv-banner").style.display = "block";
+    $("pv-exit").addEventListener("click", function () {
+      location.href = location.origin + location.pathname;
+    });
+
+    var audio = $("p-audio");
+    var maxPlays = cfg.p | 0;              // 0 = unlimited
+    var storeKey = "eap:" + fnv1a(json);
+    var TTL_MS = 6 * 60 * 60 * 1000;       // plays reset after 6 hours
+
+    /* ----- play-count persistence (survives refresh) ----- */
+    function loadState() {
+      if (preview) return { used: 0, mid: false };
+      var raw = null;
+      try { raw = localStorage.getItem(storeKey) || sessionStorage.getItem(storeKey); } catch (e) {}
+      if (!raw) return { used: 0, mid: false };
+      try {
+        var o = JSON.parse(raw);
+        if (!o.ts || Date.now() - o.ts > TTL_MS) return { used: 0, mid: false };
+        return { used: o.used | 0, mid: !!o.mid };
+      } catch (e) { return { used: 0, mid: false }; }
+    }
+    function saveState() {
+      if (preview) return;
+      var raw = JSON.stringify({ used: playsUsed, mid: midPlay, ts: Date.now() });
+      try { localStorage.setItem(storeKey, raw); } catch (e) {}
+      try { sessionStorage.setItem(storeKey, raw); } catch (e) {}
+    }
+
+    var boot = loadState();
+    var playsUsed = boot.used;
+    var midPlay = false;
+    // Reloading during a play burns that play — this is the main way around a locked player.
+    if (boot.mid) { playsUsed += 1; saveState(); }
+
+    var state = "loading";   // loading | ready | reading | playing | gap | finished | error
+    var maxTime = 0;         // furthest point reached in the current play
+    var correcting = false;
+    var timer = null;
+    var objectUrl = null;
+
+    /* ----- UI ----- */
+    $("p-title").textContent = cfg.t || "Listening";
+    if (cfg.i) $("p-instr").textContent = cfg.i; else $("p-instr").style.display = "none";
+    document.title = cfg.t || "Listening";
+
+    function renderPills() {
+      var box = $("p-pills");
+      if (!maxPlays) { box.innerHTML = '<span class="pill">Unlimited plays</span>'; return; }
+      var html = "";
+      for (var i = 1; i <= maxPlays; i++) {
+        var cls = i <= playsUsed ? "pill done" : (state === "playing" && i === playsUsed + 1 ? "pill live" : "pill");
+        html += '<span class="' + cls + '">Play ' + i + (i <= playsUsed ? " ✓" : "") + "</span>";
+      }
+      box.innerHTML = html;
+    }
+
+    function setUI(o) {
+      $("p-status").textContent = o.status || "";
+      $("p-big").textContent = o.big || "";
+      $("p-sub").textContent = o.sub || "";
+      var b = $("p-btn");
+      if (o.btn) { b.style.display = ""; b.textContent = o.btn; b.disabled = !!o.btnDisabled; }
+      else { b.style.display = "none"; }
+      $("p-progwrap").style.display = (o.prog && cfg.d > 0) ? "" : "none";
+      $("p-times").style.display = cfg.d === 2 ? "" : "none";
+      renderPills();
+    }
+
+    function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
+
+    function fail(msg) {
+      state = "error";
+      clearTimer();
+      $("p-loading").style.display = "none";
+      $("p-main").style.display = "none";
+      $("p-error").style.display = "block";
+      $("p-error").innerHTML = '<div class="note bad">' + esc(msg) + "</div>";
+    }
+
+    /* ----- lock down every way of scrubbing ----- */
+
+    audio.controls = false;
+    audio.defaultPlaybackRate = 1;
+    audio.playbackRate = 1;
+    audio.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+    audio.addEventListener("ratechange", function () {
+      if (audio.playbackRate !== 1) audio.playbackRate = 1;
+    });
+
+    audio.addEventListener("timeupdate", function () {
+      if (audio.currentTime > maxTime) maxTime = audio.currentTime;
+      if (state === "playing") paintProgress();
+    });
+
+    // Any jump backwards or forwards snaps straight back to where we were.
+    audio.addEventListener("seeking", function () {
+      if (correcting || state !== "playing") return;
+      if (Math.abs(audio.currentTime - maxTime) > 0.35) {
+        correcting = true;
+        try { audio.currentTime = maxTime; } catch (e) {}
+        setTimeout(function () { correcting = false; }, 60);
+      }
+    });
+
+    // Any pause during a play is undone immediately.
+    audio.addEventListener("pause", function () {
+      if (state !== "playing" || audio.ended) return;
+      var p = audio.play();
+      if (p && p.catch) p.catch(function () {});
+    });
+
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("error", function () {
+      if (state === "loading") fail("The audio file could not be loaded. Please tell your supervisor.");
+    });
+
+    // Keyboard: swallow space, arrows and media keys while a play is running.
+    var blocked = [" ", "Spacebar", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
+                   "MediaPlayPause", "MediaTrackNext", "MediaTrackPrevious", "MediaStop",
+                   "Home", "End", "PageUp", "PageDown"];
+    window.addEventListener("keydown", function (e) {
+      if (state === "playing" && blocked.indexOf(e.key) !== -1) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+
+    // OS / headphone transport controls.
+    if ("mediaSession" in navigator) {
+      var noop = function () {};
+      ["play", "pause", "stop", "seekbackward", "seekforward", "seekto",
+       "previoustrack", "nexttrack"].forEach(function (act) {
+        try { navigator.mediaSession.setActionHandler(act, noop); } catch (e) {}
+      });
+    }
+
+    // Warn before a reload that would cost a play.
+    window.addEventListener("beforeunload", function (e) {
+      if (state === "playing" || state === "gap" || state === "reading") {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    });
+
+    // If the browser suspended playback while the tab was hidden, resume on return.
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden && state === "playing" && audio.paused && !audio.ended) {
+        var p = audio.play();
+        if (p && p.catch) p.catch(function () {});
+      }
+    });
+
+    /* ----- load the audio up front so a network hiccup can't ruin a play ----- */
+
+    loadAudio();
+
+    function loadAudio() {
+      var msg = $("p-loadmsg");
+
+      // Preferred path: pull the whole file down, then play from memory.
+      fetch(cfg.s, { mode: "cors", credentials: "omit" }).then(function (res) {
+        if (!res.ok) throw new Error("http " + res.status);
+        var total = parseInt(res.headers.get("content-length") || "0", 10);
+        if (!res.body || !res.body.getReader) return res.blob();
+        var reader = res.body.getReader(), chunks = [], got = 0;
+        return (function pump() {
+          return reader.read().then(function (r) {
+            if (r.done) return new Blob(chunks);
+            chunks.push(r.value);
+            got += r.value.length;
+            msg.textContent = total
+              ? "Downloading audio… " + Math.round((got / total) * 100) + "%"
+              : "Downloading audio… " + Math.round(got / 1024) + " KB";
+            return pump();
+          });
+        })();
+      }).then(function (blob) {
+        objectUrl = URL.createObjectURL(blob);
+        attach(objectUrl, true);
+      }).catch(function () {
+        // Cross-origin hosts that don't send CORS headers land here: stream instead.
+        msg.textContent = "Loading audio…";
+        attach(cfg.s, false);
+      });
+    }
+
+    function attach(src, buffered) {
+      var done = false;
+      function ready() {
+        if (done) return; done = true;
+        clearTimeout(guard);
+        becomeReady();
+      }
+      audio.src = src;
+      if (buffered) {
+        audio.addEventListener("loadedmetadata", ready, { once: true });
+      } else {
+        audio.addEventListener("canplaythrough", ready, { once: true });
+        audio.addEventListener("loadedmetadata", function () {
+          $("p-loadmsg").textContent = "Buffering audio…";
+        }, { once: true });
+      }
+      audio.addEventListener("error", function () {
+        if (!done) { done = true; clearTimeout(guard); fail("The audio file could not be loaded. Please tell your supervisor."); }
+      }, { once: true });
+      audio.load();
+      // Some browsers never fire canplaythrough on long streams — go anyway.
+      var guard = setTimeout(function () { if (!done && audio.readyState >= 2) ready(); }, 20000);
+    }
+
+    /* ----- state machine ----- */
+
+    function becomeReady() {
+      $("p-loading").style.display = "none";
+      $("p-main").style.display = "block";
+      $("p-tot").textContent = mmss(audio.duration);
+
+      if (maxPlays && playsUsed >= maxPlays) { finish(); return; }
+
+      state = "ready";
+      var remaining = maxPlays ? maxPlays - playsUsed : 0;
+      var sub;
+      if (!maxPlays) sub = "You may play this as many times as you like.";
+      else if (playsUsed === 0) sub = maxPlays === 1
+        ? "You will hear this once. It cannot be paused, rewound or skipped."
+        : "You will hear this " + words(maxPlays) + ". It cannot be paused, rewound or skipped.";
+      else sub = remaining === 1 ? "You have one play left." : "You have " + wordsLeft(remaining) + " left.";
+
+      setUI({
+        status: playsUsed ? "Paused between plays" : "Ready",
+        big: "",
+        sub: sub,
+        btn: playsUsed ? "Play again" : "Start",
+        prog: false
+      });
+    }
+
+    function words(n) {
+      return ({ 1: "once", 2: "twice", 3: "three times", 4: "four times", 5: "five times" })[n] || (n + " times");
+    }
+    function wordsLeft(n) {
+      return ({ 1: "1 play", 2: "2 plays", 3: "3 plays" })[n] || (n + " plays");
+    }
+
+    $("p-btn").addEventListener("click", function () {
+      if (state === "ready") {
+        if (playsUsed === 0 && cfg.r > 0) countdown(cfg.r, "Reading time", "The audio will begin automatically.", beginPlay);
+        else beginPlay();
+      }
+    });
+
+    function countdown(secs, label, sub, then) {
+      state = (label === "Reading time") ? "reading" : "gap";
+      var left = secs;
+      setUI({ status: label, big: mmss(left), sub: sub, btn: null, prog: false });
+      clearTimer();
+      timer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) { clearTimer(); then(); return; }
+        $("p-big").textContent = mmss(left);
+      }, 1000);
+    }
+
+    function beginPlay() {
+      clearTimer();
+      state = "playing";
+      maxTime = 0;
+      midPlay = true;
+      saveState();
+      try { audio.currentTime = 0; } catch (e) {}
+      setUI({
+        status: maxPlays ? "Playing — " + (playsUsed + 1) + " of " + maxPlays : "Playing",
+        big: "",
+        sub: "Playing now. You cannot pause, rewind or skip.",
+        btn: null,
+        prog: true
+      });
+      paintProgress();
+      var p = audio.play();
+      if (p && p.catch) p.catch(function () {
+        state = "ready";
+        midPlay = false;
+        saveState();
+        setUI({ status: "Ready", big: "", sub: "Press Start to begin.", btn: "Start", prog: false });
+      });
+    }
+
+    function paintProgress() {
+      if (!cfg.d) return;
+      var d = audio.duration;
+      if (isFinite(d) && d > 0) $("p-bar").style.width = Math.min(100, (audio.currentTime / d) * 100) + "%";
+      $("p-el").textContent = mmss(audio.currentTime);
+      $("p-tot").textContent = mmss(d);
+    }
+
+    function onEnded() {
+      if (state !== "playing") return;
+      playsUsed += 1;
+      midPlay = false;
+      saveState();
+      $("p-bar").style.width = "100%";
+
+      if (maxPlays && playsUsed >= maxPlays) { finish(); return; }
+
+      var remaining = maxPlays ? maxPlays - playsUsed : 0;
+      var subtext = maxPlays ? wordsLeft(remaining) + " remaining." : "";
+
+      if (cfg.g > 0 && cfg.a) {
+        countdown(cfg.g, "Next play in", subtext || "The audio will play again automatically.", beginPlay);
+      } else if (cfg.g > 0 && !cfg.a) {
+        countdown(cfg.g, "Next play available in", subtext, becomeReady);
+      } else if (cfg.a) {
+        beginPlay();
+      } else {
+        becomeReady();
+      }
+    }
+
+    function finish() {
+      state = "finished";
+      clearTimer();
+      if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+      setUI({
+        status: "Finished",
+        big: "✓",
+        sub: "The audio has finished. Continue with your answers.",
+        btn: null,
+        prog: false
+      });
+      $("p-bar").style.width = "100%";
+    }
+  }
+})();
+</script>
+</body>
+</html>
