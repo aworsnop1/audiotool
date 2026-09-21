@@ -75,7 +75,7 @@
   .card .why { color: var(--muted); font-size: .95rem; margin: 0 0 22px; }
 
   .q { font-weight: 650; font-size: 1rem; margin: 26px 0 4px; }
-  .why + .q, details.adv > div > .q:first-child { margin-top: 0; }
+  .why + .q, details.adv > div > .q:first-child, #pickwrap > .q:first-child { margin-top: 0; }
   .qhint { color: var(--muted); font-size: .87rem; margin: 0 0 12px; }
 
   input[type="text"], input[type="url"], input[type="number"], textarea {
@@ -257,29 +257,40 @@
     <!-- STEP 2 -->
     <div class="card" data-step="2" style="display:none">
       <div class="stepnum">Step 2 of 4</div>
-      <h2>Add your audio file</h2>
-      <p class="why">Your recording needs to live somewhere online. Google Drive is the easiest place.</p>
+      <h2>Choose your audio file</h2>
+      <p class="why">Recordings are kept in the <strong>audio</strong> folder alongside this tool. Pick one from the list, or add a new one first.</p>
 
-      <div class="howto">
-        <h3>Getting a link from Google Drive</h3>
-        <ol>
-          <li>Upload your MP3 to Google Drive.</li>
-          <li>Right-click the file and choose <strong>Share</strong>.</li>
-          <li>Under <em>General access</em>, change <strong>Restricted</strong> to <strong>Anyone with the link</strong>. This step is essential — students cannot sign in during an exam.</li>
-          <li>Click <strong>Copy link</strong>, then paste it in the box below.</li>
-        </ol>
-        <details>
-          <summary>Using OneDrive or Dropbox instead?</summary>
-          <ol>
-            <li>Upload the file, then choose <strong>Share</strong> or <strong>Copy link</strong>.</li>
-            <li>Set the link so that <strong>anyone with the link</strong> can open it, with no sign-in required.</li>
-            <li>Paste it below. It will be converted automatically.</li>
-          </ol>
-        </details>
+      <div id="pickwrap">
+        <div class="q">Which recording?</div>
+        <p class="qhint" id="pickhint">Looking for recordings…</p>
+        <div class="opts" id="picklist"></div>
+        <div class="btnrow" style="margin-top:12px">
+          <button type="button" class="link" id="pickrefresh">Just uploaded one? Refresh the list</button>
+        </div>
       </div>
 
-      <div class="q">Paste the link to your recording</div>
-      <input type="url" id="f-src" placeholder="Paste the link here" autocomplete="off" spellcheck="false">
+      <details class="howto" id="addhow" style="margin-top:20px">
+        <summary style="cursor:pointer;font-weight:650;font-size:.92rem;color:var(--accent)">How do I add a new recording?</summary>
+        <ol style="margin-top:11px">
+          <li>Save your recording as an <strong>MP3</strong>. (In most programs: File → Export → MP3.)</li>
+          <li>Give it a clear filename with no spaces, such as <code>french-l2-track1.mp3</code>.</li>
+          <li>Open the <strong>audio folder</strong> <a id="addlink" href="#" target="_blank" rel="noopener">in GitHub</a>.</li>
+          <li>Click <strong>Add file</strong> → <strong>Upload files</strong>, drag your MP3 in, then click <strong>Commit changes</strong>.</li>
+          <li>Wait about a minute, then come back here and press <em>Refresh the list</em>.</li>
+        </ol>
+        <p style="font-size:.87rem;margin:11px 0 0;color:var(--muted)">
+          No GitHub account? Ask whoever set this tool up to add you, or send them the file.
+        </p>
+      </details>
+
+      <details id="pasteblock" style="margin-top:18px">
+        <summary style="cursor:pointer;font-weight:650;font-size:.92rem">Or use a file hosted somewhere else</summary>
+        <div style="padding-top:14px">
+          <p class="qhint" style="margin-top:0">Paste a direct link to an MP3. Note that <strong>Google Drive, OneDrive and Dropbox links do not work</strong> — those services block other websites from playing their files.</p>
+          <input type="url" id="f-src" placeholder="https://…" autocomplete="off" spellcheck="false">
+        </div>
+      </details>
+
       <div class="checkline" id="f-check"></div>
       <div id="f-srcnote"></div>
       <audio id="f-testaudio" style="display:none"></audio>
@@ -433,23 +444,32 @@
     <section>
       <h2>Before you start</h2>
       <ul>
-        <li>Your recording saved as an <strong>MP3</strong> (or M4A). If yours is a WAV, it will work but will be slow to load — converting it to MP3 is worth the minute it takes.</li>
-        <li>Somewhere to put it online. <strong>Google Drive is the easiest.</strong></li>
+        <li>Your recording saved as an <strong>MP3</strong>. Most programs do this with
+          File → Export → MP3. A WAV will work but is many times larger and slower to load.</li>
         <li>Your DigiExam exam, ready to add a question to.</li>
       </ul>
+      <div class="note warn">
+        <strong>Google Drive, OneDrive and Dropbox will not work.</strong> Those services deliberately
+        block other websites from playing their files, and no sharing setting changes that. Recordings
+        live in this tool's own <strong>audio</strong> folder instead — Step 1 shows how.
+      </div>
     </section>
 
     <section>
-      <h2>Step 1 — Put the recording online</h2>
+      <h2>Step 1 — Add your recording to the audio folder</h2>
+      <p>Skip this if your recording is already in the list — go straight to Step 2.</p>
       <ol>
-        <li>Open Google Drive and upload your MP3.</li>
-        <li>Right-click the file and choose <strong>Share</strong>.</li>
-        <li>Look for the section called <em>General access</em>. It usually says <strong>Restricted</strong>.</li>
-        <li>Click it and change it to <strong>Anyone with the link</strong>.
-          <br><strong>Do not skip this.</strong> Students cannot sign in to Google during an exam, so if the
-          file stays Restricted they will see nothing but an error.</li>
-        <li>Click <strong>Copy link</strong>. Leave the window open in case you need it again.</li>
+        <li>Give your file a clear name with no spaces, such as <code>french-l2-track1.mp3</code>.
+          You will pick it from a list later, so make it recognisable.</li>
+        <li>Open the tool and go to <strong>Step 2</strong>, then open
+          <em>How do I add a new recording?</em> and click the link to the audio folder.</li>
+        <li>In GitHub, click <strong>Add file</strong> → <strong>Upload files</strong>.</li>
+        <li>Drag your MP3 into the box, then scroll down and click <strong>Commit changes</strong>.</li>
+        <li>Wait about a minute, go back to the tool, and press <em>Refresh the list</em>.
+          Your recording will appear.</li>
       </ol>
+      <p><strong>No GitHub account?</strong> Ask whoever set this tool up to add you as a collaborator —
+      it takes them a minute and you only need it once. Or simply send them the file.</p>
     </section>
 
     <section>
@@ -458,10 +478,8 @@
         <li>Open the Exam Audio Player page (the address your IT team gave you — bookmark it).</li>
         <li><strong>Name the recording.</strong> Type what students should see at the top, such as
           <em>Level 2 French — Listening, Track 1</em>. Press <span class="kbd">Next</span>.</li>
-        <li><strong>Paste your Google Drive link</strong> into the box. Wait a moment — the page checks the
-          link by itself and tells you either how long the recording is, or what is wrong with it.
-          <br>If it says it cannot load the file, the cause is almost always the sharing setting in Step 1.
-          Go back and fix it, then paste the link again. Press <span class="kbd">Next</span>.</li>
+        <li><strong>Click your recording</strong> in the list. The page checks it and tells you how long
+          it is. If it is not there yet, do Step 1 above first.</li>
         <li><strong>Set the rules.</strong> Choose how many times students may hear it, how much quiet
           reading time they get first, and how long the gap between plays should be. Press
           <span class="kbd">Create my link</span>.</li>
@@ -490,9 +508,9 @@
           <br><em>Click the link and press Start when you are ready. The recording cannot be paused,
           rewound or replayed beyond the plays allowed.</em></li>
         <li><strong>The one-off bit:</strong> DigiExam only lets students open approved websites. The first
-          time anyone at school uses this, ask IT or your exams administrator to allow the player's address
-          and <span class="kbd">drive.google.com</span>. Once that is done it covers every exam, so you
-          never have to ask again.</li>
+          time anyone at school uses this, ask IT or your exams administrator to allow the player's
+          address. Because the recordings sit on that same address, that is the only one needed. Once
+          done it covers every exam, so you never have to ask again.</li>
       </ol>
     </section>
 
@@ -507,8 +525,12 @@
 
     <section>
       <h2>If something goes wrong</h2>
-      <p><strong>"Could not load" when you paste the link.</strong> The sharing setting is still Restricted.
-      Go back to Drive, Share, and set it to <em>Anyone with the link</em>.</p>
+      <p><strong>"Google Drive will not let other websites play its files."</strong> This is not your
+      sharing settings, and changing them will not help — Google blocks it for every Drive file.
+      Put the MP3 in the audio folder instead, as described in Step 1.</p>
+      <p><strong>Your recording is not in the list.</strong> Either the upload has not finished publishing
+      (wait a minute and press <em>Refresh the list</em>), or it is not an audio file — only
+      <code>.mp3</code>, <code>.m4a</code>, <code>.wav</code> and similar are shown.</p>
       <p><strong>A student sees "Link problem".</strong> The link was cut short when it was pasted —
       these links are long. Copy it again and re-paste the whole thing.</p>
       <p><strong>A student says they have no plays left before starting.</strong> Someone else used the same
@@ -610,38 +632,58 @@
     return cfg;
   }
 
-  /* Turn a normal cloud share link into one an <audio> tag can read. */
+  /* Work out what a pasted link is.
+     Consumer cloud drives send `Cross-Origin-Resource-Policy: same-site`, which browsers
+     enforce separately from CORS. That blocks their files from playing on any other site,
+     no matter how the file is shared — so those links are rejected up front rather than
+     failing later with a misleading "check your sharing settings". */
   function normaliseUrl(raw) {
     var url = String(raw || "").trim();
-    if (!url) return { url: "", kind: "", note: "" };
+    if (!url) return { url: "", kind: "", blocked: false };
 
-    var m = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/) ||
-            url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/) ||
-            url.match(/drive\.google\.com\/uc\?[^#]*id=([A-Za-z0-9_-]+)/);
-    if (m) {
+    if (/drive\.google\.com|docs\.google\.com|drive\.usercontent\.google\.com/.test(url)) {
       return {
-        url: "https://drive.google.com/uc?export=download&id=" + m[1],
-        kind: "drive",
-        note: "Google Drive link recognised. Keep the file under about 90 MB."
+        url: url, kind: "drive", blocked: true,
+        why: "Google Drive will not let other websites play its files.",
+        fix: "This is a restriction Google applies to every Drive file, so changing the sharing settings will not help. Put the MP3 in the tool's own <strong>audio</strong> folder instead — see <em>How do I add a new recording?</em> above."
       };
     }
-    if (/dropbox\.com/.test(url)) {
+    if (/dropbox\.com|dropboxusercontent\.com/.test(url)) {
       return {
-        url: url.replace(/^https?:\/\/(www\.)?dropbox\.com/, "https://dl.dropboxusercontent.com")
-                .replace(/[?&]dl=0/, "").replace(/[?&]dl=1/, ""),
-        kind: "dropbox",
-        note: "Dropbox link recognised."
+        url: url, kind: "dropbox", blocked: true,
+        why: "Dropbox links do not work as an audio source for other websites.",
+        fix: "Put the MP3 in the tool's own <strong>audio</strong> folder instead — see <em>How do I add a new recording?</em> above."
       };
     }
     if (/sharepoint\.com|1drv\.ms|onedrive\.live\.com/.test(url)) {
-      if (!/[?&]download=1/.test(url)) url += (url.indexOf("?") === -1 ? "?" : "&") + "download=1";
       return {
-        url: url,
-        kind: "onedrive",
-        note: "OneDrive or SharePoint link recognised. The sharing setting must not require signing in — students cannot log in during an exam."
+        url: url, kind: "onedrive", blocked: true,
+        why: "OneDrive and SharePoint links do not work as an audio source for other websites.",
+        fix: "Put the MP3 in the tool's own <strong>audio</strong> folder instead — see <em>How do I add a new recording?</em> above."
       };
     }
-    return { url: url, kind: "direct", note: "" };
+    return { url: url, kind: "direct", blocked: false };
+  }
+
+  /* Where the audio folder lives.
+     Auto-detected on a github.io address; set AUDIO_REPO by hand if you use a custom domain. */
+  var AUDIO_REPO = "";        // e.g. "jsmith/audiotool"
+  var AUDIO_FOLDER = "audio";
+
+  function repoSlug() {
+    if (AUDIO_REPO) return AUDIO_REPO;
+    var m = location.hostname.match(/^([A-Za-z0-9-]+)\.github\.io$/);
+    if (!m) return null;
+    var seg = location.pathname.split("/").filter(Boolean);
+    // A project site is /repo/…; a user site has nothing but an optional filename.
+    var first = seg.length ? seg[0] : "";
+    var repo = (first && !/\.[a-z]+$/i.test(first)) ? first : m[1] + ".github.io";
+    return m[1] + "/" + repo;
+  }
+
+  function folderBase() {
+    // Resolve "audio/" against the page, so it works at a subpath and on a custom domain.
+    return new URL(AUDIO_FOLDER + "/", location.href.split("?")[0]).href;
   }
 
   /* ---------------- routing ---------------- */
@@ -723,8 +765,7 @@
       if (checkState === "good") return true;
       if (checkState === "empty") {
         $("f-check").className = "checkline bad";
-        $("f-check").textContent = "Please paste the link to your recording first.";
-        $("f-src").focus();
+        $("f-check").textContent = "Please choose a recording first.";
         return false;
       }
       if (checkState === "busy") {
@@ -827,7 +868,16 @@
       var n = normaliseUrl(srcEl.value);
       if (!n.url) { checkState = "empty"; return; }
 
-      $("f-srcnote").innerHTML = n.note ? '<div class="note warn">' + esc(n.note) + "</div>" : "";
+      // Cloud-drive links can be rejected without even trying to load them.
+      if (n.blocked) {
+        checkState = "bad";
+        $("f-check").className = "checkline bad";
+        $("f-check").textContent = n.why;
+        $("f-srcnote").innerHTML = '<div class="note bad"><strong>This will not work, and it is not your sharing settings.</strong><br>' + n.fix + "</div>";
+        return;
+      }
+
+      $("f-srcnote").innerHTML = "";
 
       var a = $("f-testaudio");
       var settled = false;
@@ -841,21 +891,18 @@
         checkedUrl = n.url;
         $("f-check").className = "checkline good";
         $("f-check").textContent = isFinite(a.duration)
-          ? "Link works — the recording is " + mmss(a.duration) + " long."
-          : "Link works.";
+          ? "Ready — the recording is " + mmss(a.duration) + " long."
+          : "Ready.";
       }
       function bad() {
         if (settled) return; settled = true;
         clearTimeout(bail);
         checkState = "bad";
         $("f-check").className = "checkline bad";
-        $("f-check").textContent = "This link could not be loaded.";
-        var advice = n.kind === "drive"
-          ? "In Google Drive, right-click the file, choose <strong>Share</strong>, and change <em>General access</em> from <strong>Restricted</strong> to <strong>Anyone with the link</strong>. Then copy the link again and paste it here."
-          : n.kind === "onedrive"
-          ? "In OneDrive, open <strong>Share</strong> and set the link so <strong>anyone with the link</strong> can open it without signing in. Then copy it again."
-          : "Check the link opens in a new browser tab without asking you to sign in, and that it points straight at the audio file.";
-        $("f-srcnote").innerHTML = '<div class="note bad"><strong>Almost always the sharing setting.</strong><br>' + advice + "</div>";
+        $("f-check").textContent = "This file could not be loaded.";
+        $("f-srcnote").innerHTML = '<div class="note bad">Check that the address opens in a new browser tab ' +
+          "and plays, without asking you to sign in. Files kept in this tool's own <strong>audio</strong> folder always work; " +
+          "files on Google Drive, OneDrive and Dropbox never do.</div>";
       }
 
       a.addEventListener("loadedmetadata", good, { once: true });
@@ -863,6 +910,69 @@
       a.load();
       var bail = setTimeout(bad, 15000);
     }
+
+    /* --- step 2: list the recordings in the audio folder --- */
+
+    function loadPicker() {
+      var slug = repoSlug();
+      var hint = $("pickhint"), list = $("picklist");
+
+      $("addlink").href = slug
+        ? "https://github.com/" + slug + "/tree/main/" + AUDIO_FOLDER
+        : "https://github.com";
+
+      if (!slug) {
+        // Custom domain or local file: no folder listing available, so paste a link instead.
+        $("pickwrap").style.display = "none";
+        $("pasteblock").setAttribute("open", "");
+        $("addhow").style.display = "none";
+        return;
+      }
+
+      hint.textContent = "Looking for recordings…";
+      list.innerHTML = "";
+
+      fetch("https://api.github.com/repos/" + slug + "/contents/" + AUDIO_FOLDER, {
+        headers: { "Accept": "application/vnd.github+json" }
+      }).then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      }).then(function (items) {
+        var files = (items || []).filter(function (f) {
+          return f.type === "file" && /\.(mp3|m4a|aac|ogg|oga|wav)$/i.test(f.name);
+        });
+        if (!files.length) {
+          hint.innerHTML = "There are no recordings yet. Open <em>How do I add a new recording?</em> below to add the first one.";
+          $("addhow").setAttribute("open", "");
+          return;
+        }
+        hint.textContent = "Click the one you want.";
+        list.innerHTML = files.map(function (f) {
+          return '<button type="button" class="opt" data-file="' + esc(f.name) + '">' +
+                 "<strong>" + esc(f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ")) + "</strong>" +
+                 "<span>" + esc(f.name) + " · " + Math.round((f.size || 0) / 1024) + " KB</span></button>";
+        }).join("");
+      }).catch(function (err) {
+        hint.innerHTML = (String(err.message) === "404")
+          ? "No <strong>" + esc(AUDIO_FOLDER) + "</strong> folder found in this repository yet. " +
+            "Open <em>How do I add a new recording?</em> below to create it."
+          : "Could not read the list of recordings just now. You can still paste a link below.";
+        $("pasteblock").setAttribute("open", "");
+      });
+    }
+
+    $("picklist").addEventListener("click", function (e) {
+      var btn = e.target.closest ? e.target.closest(".opt") : null;
+      if (!btn) return;
+      Array.prototype.forEach.call($("picklist").querySelectorAll(".opt"), function (b) {
+        b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+      });
+      srcEl.value = folderBase() + encodeURIComponent(btn.getAttribute("data-file"));
+      srcEl.dispatchEvent(new Event("input"));
+    });
+
+    $("pickrefresh").addEventListener("click", loadPicker);
+    loadPicker();
 
     /* --- step 1: reload an existing link --- */
 
@@ -896,7 +1006,7 @@
       bits.push("Students will hear “" + cfg.t + "” " + times + ".");
       if (cfg.r > 0) bits.push("They get " + human(cfg.r) + " of quiet reading time first.");
       if (cfg.p !== 1 && cfg.p !== 0 && cfg.g > 0) {
-        bits.push("There is a " + human(cfg.g) + " gap between plays" + (cfg.a ? ", then it plays again by itself." : ", then they press Play again."));
+        bits.push("There is a " + humanAdj(cfg.g) + " gap between plays" + (cfg.a ? ", then it plays again by itself." : ", then they press Play again."));
       }
       bits.push("They cannot pause, rewind or skip.");
       return bits.join(" ");
@@ -905,6 +1015,12 @@
       if (s < 60) return s + " seconds";
       var m = Math.floor(s / 60), r = s % 60;
       return m + (m === 1 ? " minute" : " minutes") + (r ? " " + r + " seconds" : "");
+    }
+    // Attributive form, as in "a 30-second gap".
+    function humanAdj(s) {
+      if (s < 60) return s + "-second";
+      var m = Math.floor(s / 60), r = s % 60;
+      return r ? human(s) : m + "-minute";
     }
 
     $("f-make").addEventListener("click", function () {
